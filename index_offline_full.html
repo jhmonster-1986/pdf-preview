@@ -4,117 +4,94 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>강남맛집 오프라인 제안서</title>
-  <meta property="og:title" content="강남맛집 오프라인 제안서" />
-  <meta property="og:description" content="강남맛집 체험단 플랫폼 오프라인 마케팅 제안서입니다." />
+  <title>강남맛집 광고 제안서</title>
+
+  <!-- 썸네일 미리보기 설정 -->
+  <meta property="og:title" content="강남맛집 광고 제안서" />
+  <meta property="og:description" content="강남맛집 체험단 플랫폼 광고 제안서입니다." />
   <meta property="og:image" content="https://jhmonster-1986.github.io/pdf-preview/thumbnail.png" />
   <meta property="og:url" content="https://jhmonster-1986.github.io/pdf-preview/index_offline_full.html" />
+  <meta name="twitter:card" content="summary_large_image" />
+
   <style>
     html, body {
       margin: 0;
       padding: 0;
-      background: #000;
-      height: 100%;
       overflow: hidden;
+      background-color: #000;
     }
-    #pdf-viewer {
-      width: 100vw;
+    #pdf-container {
       height: 100vh;
-      touch-action: none;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      width: 100vw;
       position: relative;
+      touch-action: manipulation;
     }
     canvas {
-      max-width: 100vw;
-      max-height: 100vh;
       display: block;
+      margin: auto;
+      max-width: 100%;
+      height: auto !important;
+      width: auto !important;
+      max-height: 100vh;
     }
-    #page-indicator {
-      position: fixed;
-      bottom: 10px;
-      right: 15px;
-      color: white;
-      background-color: rgba(0,0,0,0.4);
-      padding: 4px 8px;
-      border-radius: 6px;
-      font-family: sans-serif;
-      font-size: 14px;
-      z-index: 10;
-    }
-    .touch-zone {
-      position: absolute;
-      top: 0;
-      bottom: 0;
-      width: 50%;
-      z-index: 5;
-    }
-    #left-zone { left: 0; }
-    #right-zone { right: 0; }
   </style>
 </head>
 <body>
-  <div id="pdf-viewer">
-    <canvas id="pdf-canvas"></canvas>
-    <div id="left-zone" class="touch-zone"></div>
-    <div id="right-zone" class="touch-zone"></div>
-  </div>
-  <div id="page-indicator">1 / ?</div>
+  <div id="pdf-container"></div>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
   <script>
-    const url = "오프라인 제안서(지원팀)_체험(주)_250627.pdf";
-    const canvas = document.getElementById("pdf-canvas");
-    const ctx = canvas.getContext("2d");
-    const indicator = document.getElementById("page-indicator");
-    let pdfDoc = null, pageNum = 1, totalPages = 0, isRendering = false;
+    const pdfPath = '오프라인 제안서(지원팀)_체험(주)_250627.pdf';
+    const container = document.getElementById('pdf-container');
+    let pdfDoc = null, pageNum = 1, canvas, ctx;
 
-    const renderPage = (num) => {
-      isRendering = true;
-      pdfDoc.getPage(num).then((page) => {
-        const viewport = page.getViewport({ scale: 1 });
-        const scale = Math.min(window.innerWidth / viewport.width, window.innerHeight / viewport.height);
-        const scaledViewport = page.getViewport({ scale });
-
-        canvas.width = scaledViewport.width;
-        canvas.height = scaledViewport.height;
-
-        page.render({ canvasContext: ctx, viewport: scaledViewport }).promise.then(() => {
-          isRendering = false;
-          indicator.textContent = `${pageNum} / ${totalPages}`;
-        });
+    function renderPage(num) {
+      pdfDoc.getPage(num).then(function(page) {
+        const viewport = page.getViewport({ scale: 1.5 });
+        canvas = document.createElement("canvas");
+        ctx = canvas.getContext("2d");
+        canvas.height = viewport.height;
+        canvas.width = viewport.width;
+        container.innerHTML = '';
+        container.appendChild(canvas);
+        page.render({ canvasContext: ctx, viewport: viewport });
       });
-    };
+    }
 
-    const queueRenderPage = (num) => {
-      if (num < 1 || num > totalPages || isRendering) return;
-      pageNum = num;
-      renderPage(pageNum);
-    };
-
-    pdfjsLib.getDocument(url).promise.then((pdf) => {
-      pdfDoc = pdf;
-      totalPages = pdf.numPages;
+    pdfjsLib.getDocument(pdfPath).promise.then(function(pdfDoc_) {
+      pdfDoc = pdfDoc_;
       renderPage(pageNum);
     });
 
-    // 스와이프 + 터치
-    let startX = null;
-    document.body.addEventListener("touchstart", (e) => {
+    // 스와이프 & 터치 영역 제스처 처리
+    let startX = 0;
+    container.addEventListener('touchstart', e => {
       startX = e.changedTouches[0].screenX;
     });
-    document.body.addEventListener("touchend", (e) => {
+
+    container.addEventListener('touchend', e => {
       const endX = e.changedTouches[0].screenX;
-      const deltaX = endX - startX;
-      if (Math.abs(deltaX) > 50) {
-        if (deltaX < 0) queueRenderPage(pageNum + 1);
-        else if (deltaX > 0) queueRenderPage(pageNum - 1);
+      const delta = endX - startX;
+      if (delta > 50 && pageNum > 1) {
+        pageNum--;
+        renderPage(pageNum);
+      } else if (delta < -50 && pageNum < pdfDoc.numPages) {
+        pageNum++;
+        renderPage(pageNum);
       }
     });
 
-    document.getElementById("left-zone").addEventListener("click", () => queueRenderPage(pageNum - 1));
-    document.getElementById("right-zone").addEventListener("click", () => queueRenderPage(pageNum + 1));
+    container.addEventListener('click', e => {
+      const x = e.clientX;
+      const width = window.innerWidth;
+      if (x < width * 0.4 && pageNum > 1) {
+        pageNum--;
+        renderPage(pageNum);
+      } else if (x > width * 0.6 && pageNum < pdfDoc.numPages) {
+        pageNum++;
+        renderPage(pageNum);
+      }
+    });
   </script>
 </body>
 </html>
