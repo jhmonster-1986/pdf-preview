@@ -1,0 +1,129 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta property="og:image" content="thumbnail.png" />
+  <meta property="og:title" content="강남맛집 광고제안서" />
+  <meta property="og:description" content="체험단 광고제안서 PDF 미리보기" />
+  <title>강남맛집 광고제안서</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow: hidden;
+      background-color: #000;
+    }
+    #container {
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+    canvas {
+      display: block;
+      margin: 0 auto;
+      max-width: 100%;
+      max-height: 100%;
+    }
+    #page-info {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      color: white;
+      font-size: 14px;
+      background-color: rgba(0, 0, 0, 0.5);
+      padding: 4px 8px;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div id="container">
+    <div id="page-info">페이지 1 / 55</div>
+    <canvas id="the-canvas"></canvas>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+  <script>
+    const url = '오프라인 제안서(지원팀)_체험(주)_250627.pdf';
+    const TOTAL_PAGES = 55;
+    let pdfDoc = null;
+    let pageNum = 1;
+    let pageRendering = false;
+    let pageNumPending = null;
+    const canvas = document.getElementById("the-canvas");
+    const ctx = canvas.getContext("2d");
+    const pageInfo = document.getElementById("page-info");
+
+    function renderPage(num) {
+      pageRendering = true;
+      pdfDoc.getPage(num).then(function(page) {
+        const viewport = page.getViewport({ scale: 1.5 });
+        canvas.height = viewport.height;
+        canvas.width = viewport.width;
+
+        const renderContext = {
+          canvasContext: ctx,
+          viewport: viewport
+        };
+        const renderTask = page.render(renderContext);
+
+        renderTask.promise.then(function() {
+          pageRendering = false;
+          if (pageNumPending !== null) {
+            renderPage(pageNumPending);
+            pageNumPending = null;
+          }
+          pageInfo.textContent = `페이지 ${pageNum} / ${TOTAL_PAGES}`;
+        });
+      });
+    }
+
+    function queueRenderPage(num) {
+      if (pageRendering) {
+        pageNumPending = num;
+      } else {
+        renderPage(num);
+      }
+    }
+
+    function onSwipe(direction) {
+      if (direction === 'left' && pageNum < TOTAL_PAGES) {
+        pageNum++;
+        queueRenderPage(pageNum);
+      } else if (direction === 'right' && pageNum > 1) {
+        pageNum--;
+        queueRenderPage(pageNum);
+      }
+    }
+
+    pdfjsLib.getDocument(url).promise.then(function(pdfDoc_) {
+      pdfDoc = pdfDoc_;
+      renderPage(pageNum);
+    });
+
+    let startX = 0;
+    document.addEventListener('touchstart', e => {
+      startX = e.touches[0].clientX;
+    });
+    document.addEventListener('touchend', e => {
+      const endX = e.changedTouches[0].clientX;
+      const diffX = startX - endX;
+      if (Math.abs(diffX) > 30) {
+        onSwipe(diffX > 0 ? 'left' : 'right');
+      }
+    });
+
+    document.addEventListener('click', e => {
+      const width = window.innerWidth;
+      if (e.clientX > width * 0.66) {
+        onSwipe('left');
+      } else if (e.clientX < width * 0.33) {
+        onSwipe('right');
+      }
+    });
+  </script>
+</body>
+</html>
