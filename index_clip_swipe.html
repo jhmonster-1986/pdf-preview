@@ -1,0 +1,108 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>네이버 Clip 광고 제안서</title>
+
+  <!-- 썸네일 및 미리보기용 메타태그 (카카오톡, 페이스북 등) -->
+  <meta property="og:title" content="네이버 Clip 광고 제안서" />
+  <meta property="og:description" content="네이버 Clip 체험단 마케팅 제안서입니다." />
+  <meta property="og:image" content="https://jhmonster-1986.github.io/pdf-preview/thumbnail_clip.png" />
+  <meta property="og:url" content="https://jhmonster-1986.github.io/pdf-preview/index_clip_swipe.html" />
+  <meta name="twitter:card" content="summary_large_image" />
+
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #000;
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+    }
+    #pdf-viewer {
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      touch-action: pan-y;
+    }
+    canvas {
+      max-width: 100%;
+      max-height: 100%;
+    }
+    #page-indicator {
+      position: absolute;
+      bottom: 10px;
+      right: 15px;
+      color: white;
+      font-size: 14px;
+      background-color: rgba(0,0,0,0.4);
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-family: sans-serif;
+    }
+  </style>
+</head>
+<body>
+  <div id="pdf-viewer"><canvas id="pdf-canvas"></canvas></div>
+  <div id="page-indicator">1 / ?</div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script>
+    const url = "Clip_ad.pdf";
+    let pdfDoc = null, currentPage = 1, totalPages = 0, isRendering = false;
+    const canvas = document.getElementById("pdf-canvas");
+    const ctx = canvas.getContext("2d");
+    const indicator = document.getElementById("page-indicator");
+
+    const renderPage = num => {
+      isRendering = true;
+      pdfDoc.getPage(num).then(page => {
+        const viewport = page.getViewport({ scale: 1.5 });
+        canvas.height = viewport.height;
+        canvas.width = viewport.width;
+
+        page.render({ canvasContext: ctx, viewport }).promise.then(() => {
+          isRendering = false;
+          indicator.textContent = `${currentPage} / ${totalPages}`;
+        });
+      });
+    };
+
+    const queueRenderPage = num => {
+      if (!isRendering) renderPage(num);
+    };
+
+    pdfjsLib.getDocument(url).promise.then(pdfDoc_ => {
+      pdfDoc = pdfDoc_;
+      totalPages = pdfDoc.numPages;
+      renderPage(currentPage);
+    });
+
+    // 스와이프 구현
+    let touchStartX = 0;
+    document.getElementById("pdf-viewer").addEventListener("touchstart", e => {
+      touchStartX = e.changedTouches[0].screenX;
+    });
+
+    document.getElementById("pdf-viewer").addEventListener("touchend", e => {
+      const touchEndX = e.changedTouches[0].screenX;
+      const delta = touchEndX - touchStartX;
+
+      if (Math.abs(delta) > 30) {
+        if (delta < 0 && currentPage < totalPages) {
+          currentPage++;
+          queueRenderPage(currentPage);
+        } else if (delta > 0 && currentPage > 1) {
+          currentPage--;
+          queueRenderPage(currentPage);
+        }
+      }
+    });
+  </script>
+</body>
+</html>
