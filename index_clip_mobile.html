@@ -1,0 +1,91 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>네이버 Clip 광고 제안서</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow: hidden;
+      background-color: #000;
+    }
+    #pdf-viewer {
+      width: 100vw;
+      height: 100vh;
+    }
+    canvas {
+      display: block;
+      margin: 0 auto;
+      max-width: 100%;
+      height: auto !important;
+    }
+    .controls {
+      position: fixed;
+      bottom: 10px;
+      width: 100%;
+      text-align: center;
+      z-index: 10;
+    }
+    .controls button {
+      font-size: 18px;
+      padding: 10px 20px;
+      margin: 0 10px;
+      border: none;
+      border-radius: 6px;
+      background-color: #fff;
+      color: #000;
+    }
+  </style>
+</head>
+<body>
+  <div id="pdf-viewer">
+    <canvas id="pdf-canvas"></canvas>
+    <div class="controls">
+      <button onclick="prevPage()">◀ 이전</button>
+      <button onclick="nextPage()">다음 ▶</button>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.12.313/pdf.min.js"></script>
+  <script>
+    const url = "Clip_ad.pdf";
+    let pdfDoc = null,
+        pageNum = 1,
+        canvas = document.getElementById("pdf-canvas"),
+        ctx = canvas.getContext("2d");
+
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+      "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.12.313/pdf.worker.min.js";
+
+    function renderPage(num) {
+      pdfDoc.getPage(num).then(page => {
+        const viewport = page.getViewport({ scale: 1.5 });
+        canvas.height = viewport.height;
+        canvas.width = viewport.width;
+        page.render({ canvasContext: ctx, viewport: viewport });
+      });
+    }
+
+    function prevPage() {
+      if (pageNum <= 1) return;
+      pageNum--;
+      renderPage(pageNum);
+    }
+
+    function nextPage() {
+      if (pageNum >= pdfDoc.numPages) return;
+      pageNum++;
+      renderPage(pageNum);
+    }
+
+    pdfjsLib.getDocument(url).promise.then(pdfDoc_ => {
+      pdfDoc = pdfDoc_;
+      renderPage(pageNum);
+    });
+  </script>
+</body>
+</html>
