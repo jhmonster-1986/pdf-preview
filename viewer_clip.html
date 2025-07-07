@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>강남맛집 클립 광고제안서</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+  <style>
+    html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; }
+    #pdf-canvas { display: block; margin: 0 auto; width: 100%; max-width: 800px; }
+    .pdf-container { display: flex; justify-content: center; align-items: center; height: 100vh; background: #f9f9f9; }
+  </style>
+</head>
+<body>
+  <div class="pdf-container">
+    <canvas id="pdf-canvas"></canvas>
+  </div>
+  <script>
+    const url = 'Clip_ad.pdf';
+    const canvas = document.getElementById('pdf-canvas');
+    const loadingTask = pdfjsLib.getDocument(url);
+    loadingTask.promise.then(function(pdf) {
+      pdf.getPage(1).then(function(page) {
+        const viewport = page.getViewport({ scale: 1.5 });
+        const context = canvas.getContext('2d');
+        canvas.height = viewport.height;
+        canvas.width = viewport.width;
+        page.render({ canvasContext: context, viewport: viewport });
+      });
+    });
+  </script>
+</body>
+</html>
