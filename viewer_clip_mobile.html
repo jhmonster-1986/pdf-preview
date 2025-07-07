@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>네이버 Clip 광고 제안서</title>
+  <meta property="og:title" content="네이버 Clip 광고 제안서" />
+  <meta property="og:description" content="네이버 클립 기반 체험단 마케팅 전략 제안서 PDF 뷰어입니다." />
+  <meta property="og:image" content="https://jhmonster-1986.github.io/pdf-preview/thumbnail_clip.png" />
+  <meta property="og:url" content="https://jhmonster-1986.github.io/pdf-preview/viewer_clip_mobile.html" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: #f5f5f5;
+    }
+    #pdf-canvas {
+      width: 100vw;
+      height: auto;
+      display: block;
+      background: #fff;
+    }
+    #controls {
+      text-align: center;
+      margin: 10px 0;
+    }
+    button {
+      font-size: 18px;
+      padding: 12px 20px;
+      margin: 0 10px;
+      border: none;
+      border-radius: 6px;
+      background: #333;
+      color: #fff;
+      cursor: pointer;
+    }
+    #page-info {
+      margin-top: 10px;
+      font-size: 16px;
+      color: #444;
+    }
+    @media (max-width: 480px) {
+      button {
+        width: 40%;
+        font-size: 16px;
+        padding: 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="pdf-canvas"></canvas>
+  <div id="controls">
+    <button onclick="prevPage()">⬅ 이전</button>
+    <button onclick="nextPage()">다음 ➡</button>
+    <div id="page-info">페이지 1 / ?</div>
+  </div>
+
+  <script>
+    const url = 'Clip_ad.pdf';
+    const canvas = document.getElementById('pdf-canvas');
+    const ctx = canvas.getContext('2d');
+    let pdfDoc = null, currentPage = 1, totalPages = 0;
+
+    pdfjsLib.getDocument(url).promise.then(pdf => {
+      pdfDoc = pdf;
+      totalPages = pdf.numPages;
+      document.getElementById('page-info').textContent = `페이지 ${currentPage} / ${totalPages}`;
+      renderPage(currentPage);
+    });
+
+    function renderPage(num) {
+      pdfDoc.getPage(num).then(page => {
+        const viewport = page.getViewport({ scale: window.innerWidth / page.getViewport({ scale: 1 }).width });
+        canvas.height = viewport.height;
+        canvas.width = viewport.width;
+        page.render({ canvasContext: ctx, viewport: viewport });
+        document.getElementById('page-info').textContent = `페이지 ${num} / ${totalPages}`;
+      });
+    }
+
+    function prevPage() {
+      if (currentPage <= 1) return;
+      currentPage--;
+      renderPage(currentPage);
+    }
+
+    function nextPage() {
+      if (currentPage >= totalPages) return;
+      currentPage++;
+      renderPage(currentPage);
+    }
+  </script>
+</body>
+</html>
